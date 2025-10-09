@@ -6,6 +6,10 @@
   <title>Stock MR - Gestion de Véhicules</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase.js"></script>
 </head>
 <body>
   <header>
@@ -14,8 +18,31 @@
   </header>
 
   <nav>
-    <button class="tab-btn active" onclick="showTab('stock')">🚗 Stock</button>
-    <button class="tab-btn" onclick="showTab('invoices')">📑 Factures</button>
+  <button class="tab-btn active" onclick="showTab('stock')">🚗 Stock</button>
+  <button class="tab-btn" onclick="showTab('invoices')">📑 Factures</button>
+  <button class="tab-btn" onclick="showTab('admin')">⚙️ Admin</button>
+    <!-- Section Admin -->
+    <div id="admin-section" class="section" style="display:none">
+      <div class="header-actions">
+        <h2>⚙️ Administration</h2>
+      </div>
+      <div class="admin-block">
+        <h3>Fournisseurs</h3>
+        <form id="form-fournisseur">
+          <input type="text" id="nom-fournisseur" placeholder="Nom du fournisseur" required>
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+        <ul id="liste-fournisseurs"></ul>
+      </div>
+      <div class="admin-block">
+        <h3>Champs dynamiques du stock</h3>
+        <form id="form-champ">
+          <input type="text" id="nom-champ" placeholder="Nom du champ" required>
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+        <ul id="liste-champs"></ul>
+      </div>
+    </div>
   </nav>
 
   <div class="container">
@@ -134,5 +161,18 @@
   </div>
 
   <script src="script.js"></script>
+  <script>
+    // Affichage des onglets
+    function showTab(tab) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('stock-section').style.display = (tab === 'stock') ? 'block' : 'none';
+      document.getElementById('invoices-section').style.display = (tab === 'invoices') ? 'block' : 'none';
+      document.getElementById('admin-section').style.display = (tab === 'admin') ? 'block' : 'none';
+      if(tab === 'stock') document.getElementById('stock-section').classList.add('active');
+      if(tab === 'invoices') document.getElementById('invoices-section').classList.add('active');
+      if(tab === 'admin') document.getElementById('admin-section').classList.add('active');
+    }
+  </script>
+  <!-- script.js doit être chargé après firebase.js pour utiliser les fonctions Firebase -->
 </body>
 </html>
