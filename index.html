@@ -1,192 +1,32 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock MR - Gestion de Véhicules</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=20251009">
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="firebase.js"></script>
-</head>
-<body>
-  <header>
-    <span class="fiat-logo">
-      <svg viewBox="0 0 64 64" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="30" fill="#b71c1c" stroke="#fff" stroke-width="4"/>
-        <text x="32" y="42" text-anchor="middle" font-size="28" font-family="Arial Black,Arial,sans-serif" fill="#fff" font-weight="bold">FIAT</text>
-      </svg>
-    </span>
-    <h1>🚗 Stock MR 📑</h1>
-    <p>Gestion du stock et des factures</p>
-  </header>
+'})}</div></div>` : ''}
+                    </div>
+                </div>
+                <div class="section purple">
+                    <div class="section-title">📋 2. FACTURES EXTERNES</div>
+                    <div class="invoice-list">${invoicesHTML}</div>
+                </div>
+                <div class="section green">
+                    <div class="section-title">✅ 3. VENTE & PROFIL NET</div>
+                    <div class="summary-line"><span>Prix d'achat:</span><strong>${vehicle.cost.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    ${vehicle.pad > 0 ? `<div class="summary-line"><span>PAD:</span><strong>${vehicle.pad.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>` : ''}
+                    <div class="summary-line"><span>Total factures:</span><strong style="color:#ef4444">${invoiceTotal.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div class="summary-line total"><span>COÛT TOTAL:</span><strong>${totalCost.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div class="summary-line" style="font-size:18px;margin-top:15px"><span style="color:#10b981;font-weight:700">Prix de vente:</span><strong style="color:#10b981;font-size:22px">${vehicle.sold.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div class="summary-line profit"><span class="label">PROFIL NET:</span><strong class="value" style="color:${profit >= 0 ? '#10b981' : '#ef4444'}">${profit.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div style="margin-top:20px">${vehicle.status === 'vendu' ? `<span class="badge ${profit >= 0 ? 'profit' : 'loss'}" style="font-size:16px;padding:12px 24px">${profit >= 0 ? '✓ Vendu profit' : '↓ Vendu perte'}</span>` : '<span class="badge available" style="font-size:16px;padding:12px 24px">📦 En inventaire</span>'}</div>
+                </div>
+            `;
+            
+            document.getElementById('vehicleModal').classList.add('active');
+        }
 
-  <nav>
-  <button class="tab-btn active" onclick="showTab('stock')">🚗 Stock</button>
-  <button class="tab-btn" onclick="showTab('invoices')">📑 Factures</button>
-  <button class="tab-btn" onclick="showTab('admin')">⚙️ Admin</button>
-    <!-- Section Admin -->
-    <div id="admin-section" class="section" style="display:none">
-      <div class="header-actions">
-        <h2>⚙️ Administration</h2>
-      </div>
-      <div class="admin-block">
-        <h3>Fournisseurs</h3>
-        <form id="form-fournisseur">
-          <input type="text" id="nom-fournisseur" placeholder="Nom du fournisseur" required>
-          <button type="submit" class="btn btn-primary">Ajouter</button>
-        </form>
-        <ul id="liste-fournisseurs"></ul>
-      </div>
-      <div class="admin-block">
-        <h3>Champs dynamiques du stock</h3>
-        <form id="form-champ">
-          <input type="text" id="nom-champ" placeholder="Nom du champ" required>
-          <button type="submit" class="btn btn-primary">Ajouter</button>
-        </form>
-        <ul id="liste-champs"></ul>
-      </div>
-    </div>
-  </nav>
+        function closeModal(event) {
+            if (!event || event.target.id === 'vehicleModal') {
+                document.getElementById('vehicleModal').classList.remove('active');
+            }
+        }
 
-  <div class="container">
-    <!-- Section Stock -->
-    <div id="stock-section" class="section active">
-      <div class="header-actions">
-        <h2>🚗 Gestion du Stock</h2>
-        <div>
-          <button class="btn btn-primary" onclick="addVehicle()">➕ Ajouter</button>
-          <button class="btn btn-secondary" onclick="refreshData()">🔄 Rafraîchir</button>
-          <label class="btn btn-danger" style="margin-left:1em;cursor:pointer;">
-            📤 Importer CSV → Firestore
-            <input type="file" id="import-csv-firestore" accept=".csv" style="display:none">
-          </label>
-        </div>
-      </div>
-      
-      <div class="stats">
-        <div class="stat-card">
-          <h3>79</h3>
-          <p>Total Véhicules</p>
-        </div>
-        <div class="stat-card">
-          <h3>46</h3>
-          <p>Vendus</p>
-        </div>
-        <div class="stat-card">
-          <h3>33</h3>
-          <p>En Stock</p>
-        </div>
-      </div>
-
-      <div class="table-container">
-        <table id="vehicles-table">
-          <thead>
-            <tr>
-              <th>MR</th>
-              <th>Marque</th>
-              <th>Modèle</th>
-              <th>Année</th>
-              <th>Coût</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Les véhicules seront chargés ici -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Section Factures -->
-    <div id="invoices-section" class="section">
-      <div class="header-actions">
-        <h2>📑 Gestion des Factures</h2>
-        <button class="btn btn-primary" onclick="addInvoice()">➕ Ajouter</button>
-        <label class="btn btn-danger" style="margin-left:1em;cursor:pointer;">
-          📤 Importer CSV → Firestore
-          <input type="file" id="import-csv-factures-firestore" accept=".csv" style="display:none">
-        </label>
-      </div>
-      
-      <div class="table-container">
-        <table id="invoices-table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Date</th>
-              <th>No Facture</th>
-              <th>Description</th>
-              <th>Montant</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Les factures seront chargées ici -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal pour ajouter/modifier -->
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h2 id="modal-title">Ajouter Véhicule</h2>
-      <form id="modal-form">
-        <div class="form-group">
-          <label>MR</label>
-          <input type="text" id="mr" required>
-        </div>
-        <div class="form-group">
-          <label>Marque</label>
-          <input type="text" id="marque" required>
-        </div>
-        <div class="form-group">
-          <label>Modèle</label>
-          <input type="text" id="modele" required>
-        </div>
-        <div class="form-group">
-          <label>Année</label>
-          <input type="number" id="annee" required>
-        </div>
-        <div class="form-group">
-          <label>Coût ($)</label>
-          <input type="number" id="cout" step="0.01" required>
-        </div>
-        <div class="form-group">
-          <label>Statut</label>
-          <select id="statut">
-            <option value="En stock">En stock</option>
-            <option value="Vendu">Vendu</option>
-            <option value="En réparation">En réparation</option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-          <button type="submit" class="btn btn-primary">Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-  <script>
-    // Affichage des onglets
-    function showTab(tab) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById('stock-section').style.display = (tab === 'stock') ? 'block' : 'none';
-      document.getElementById('invoices-section').style.display = (tab === 'invoices') ? 'block' : 'none';
-      document.getElementById('admin-section').style.display = (tab === 'admin') ? 'block' : 'none';
-      if(tab === 'stock') document.getElementById('stock-section').classList.add('active');
-      if(tab === 'invoices') document.getElementById('invoices-section').classList.add('active');
-      if(tab === 'admin') document.getElementById('admin-section').classList.add('active');
-    }
-  </script>
-  <!-- script.js doit être chargé après firebase.js pour utiliser les fonctions Firebase -->
+        renderVehicles();
+    </script>
 </body>
 </html>
